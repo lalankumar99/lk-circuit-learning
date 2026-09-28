@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#020617">
+    <title>LK Circuit Learning</title>
+    
+    <!-- PWA Manifest & Icons Link -->
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        appBg: '#020617',     /* Premium deep dark */
+                        appSurface: '#0f172a',
+                        appPrimary: '#0ea5e9', /* Vibrant electric blue */
+                        appText: '#f8fafc',
+                        appMuted: '#64748b'
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Hide scrollbar for app feel */
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .view-screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .view-screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .md-content { line-height: 1.6; font-size: 1.05rem; padding-bottom: 2rem; }
+        .md-content h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 1rem; color: #38bdf8; }
+        .md-content h2 { font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;}
+        .md-content p { margin-bottom: 1rem; color: #cbd5e1; }
+        .md-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #cbd5e1; }
+        .md-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #cbd5e1; }
+        .md-content code { background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: #fbbf24; font-size: 0.9em; }
+        .md-content pre { background: #1e293b; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1rem; }
+        .md-content pre code { background: none; color: #e2e8f0; padding: 0; }
+        .md-content blockquote { border-left: 4px solid #38bdf8; padding-left: 1rem; color: #94a3b8; background: rgba(56, 189, 248, 0.1); padding: 0.5rem 1rem; border-radius: 4px;}
+        .md-content img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+        .md-content a { color: #38bdf8; text-decoration: none; }
+        
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #0ea5e9;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Premium Global UI Styles */
+        .glass-nav {
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .app-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col text-appText font-sans">
+
+    <header id="appHeader" class="glass-nav px-5 py-4 flex items-center justify-between z-20 shrink-0 sticky top-0 border-b border-slate-800/50">
+        <div class="flex items-center gap-3">
+            <button id="backBtn" class="hidden text-appPrimary p-1.5 -ml-1.5 rounded-full hover:bg-slate-800/80 transition active:scale-95" onclick="app.goBack()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h1 id="headerTitle" class="text-xl font-bold truncate tracking-wide text-white">LK Circuit Learning</h1>
+        </div>
+        <div id="headerActions" class="flex items-center gap-2">
+            <button id="bookmarkToggleBtn" class="hidden text-appMuted p-2 rounded-full hover:bg-slate-800/80 transition active:scale-95" onclick="app.toggleBookmark()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto relative bg-appBg">
+        
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="absolute inset-0 z-50 bg-appBg flex flex-col items-center justify-center">
+            <div class="loader mb-4"></div>
+            <p class="text-appMuted text-sm font-medium" id="loadingText">Syncing data...</p>
+        </div>
+
+        <!-- Home View -->
+        <div id="view-home" class="view-screen active flex-col p-4 w-full h-full pb-20">
+            <div id="breadcrumbs" class="text-xs text-appPrimary mb-4 font-medium flex gap-1 overflow-x-auto whitespace-nowrap hidden"></div>
+            <div id="repoList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Repo items -->
+            </div>
+        </div>
+
+        <!-- Reader View -->
+        <div id="view-reader" class="view-screen flex-col w-full min-h-full bg-appBg">
+            <div id="markdownContainer" class="md-content px-5 pt-6 pb-24 max-w-3xl mx-auto w-full">
+                <!-- Markdown Content -->
+            </div>
+        </div>
+
+        <!-- Bookmarks View -->
+        <div id="view-bookmarks" class="view-screen flex-col p-4 w-full h-full pb-20">
+            <h2 class="text-lg font-bold mb-4 text-appPrimary">Saved Topics</h2>
+            <div id="bookmarksList" class="flex flex-col gap-3">
+                <!-- Bookmarks -->
+            </div>
+        </div>
+
+        <!-- Search View -->
+        <div id="view-search" class="view-screen flex-col p-4 w-full h-full pb-20">
+            <div class="relative mb-6">
+                <input type="text" id="searchInput" placeholder="Search files..." class="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl py-3.5 pl-12 pr-4 text-appText focus:ring-2 focus:ring-appPrimary outline-none transition shadow-inner" oninput="app.handleSearch()">
+                <svg class="w-5 h-5 text-appMuted absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <div id="searchResults" class="flex flex-col gap-3">
+                <!-- Results -->
+            </div>
+        </div>
+
+    </main>
+
+    <nav class="glass-nav border-t border-slate-800/80 pb-safe fixed bottom-0 w-full z-30 shrink-0">
+        <div class="flex justify-around items-center h-16 px-4 max-w-md mx-auto">
+            <button class="nav-btn flex flex-col items-center gap-1.5 p-2 w-20 text-appPrimary transition active:scale-95" onclick="app.switchTab('home')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1.5 p-2 w-20 text-appMuted hover:text-appPrimary transition active:scale-95" onclick="app.switchTab('search')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <span class="text-[10px] font-medium">Search</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1.5 p-2 w-20 text-appMuted hover:text-appPrimary transition active:scale-95" onclick="app.switchTab('bookmarks')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span class="text-[10px] font-medium">Saved</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const USERNAME = 'lalankumar99'; 
+        const REPO = 'lk-circuit-learning';           
+        
+        const app = {
+            api: 'https://api.github.com/repos',
+            pathStack: [{ path: '', name: 'Home' }],
+            allFiles: [],
+            bookmarks: JSON.parse(localStorage.getItem('study_bookmarks') || '[]'),
+            currentFile: null,
+
+            async init() {
+                marked.setOptions({ breaks: true, gfm: true });
+                await this.fetchRepoTree();
+                this.loadPath('');
+            },
+
+            showLoading(show, text = 'Loading...') {
+                const el = document.getElementById('loadingOverlay');
+                document.getElementById('loadingText').innerText = text;
+                el.style.display = show ? 'flex' : 'none';
+            },
+
+            async fetchRepoTree() {
+                try {
+                    const infoRes = await fetch(`${this.api}/${USERNAME}/${REPO}`);
+                    if(!infoRes.ok) throw new Error("Repo not found");
+                    const info = await infoRes.json();
+                    
+                    const treeRes = await fetch(`${this.api}/${USERNAME}/${REPO}/git/trees/${info.default_branch}?recursive=1`);
+                    const treeData = await treeRes.json();
+                    
+                    this.allFiles = treeData.tree.filter(i => 
+                        !i.path.startsWith('.') && 
+                        (i.type === 'tree' || i.path.endsWith('.md'))
+                    );
+                } catch(e) {
+                    console.error(e);
+                    document.getElementById('loadingText').innerText = "Failed to connect!";
+                }
+            },
+
+            async loadPath(path, name = 'Home') {
+                this.showLoading(true, 'Fetching...');
+                try {
+                    const res = await fetch(`${this.api}/${USERNAME}/${REPO}/contents/${path}`);
+                    const data = await res.json();
+                    
+                    let items = Array.isArray(data) ? data : [data];
+                    items = items.filter(i => i.type === 'dir' || i.name.endsWith('.md'));
+                    items.sort((a,b) => a.type === b.type ? a.name.localeCompare(b.name) : (a.type === 'dir' ? -1 : 1));
+                    
+                    this.renderList(items);
+                    
+                    if(path !== this.pathStack[this.pathStack.length-1]?.path) {
+                        this.pathStack.push({path, name});
+                    }
+                    this.updateHeader();
+                } catch(e) {
+                    console.error(e);
+                }
+                this.showLoading(false);
+            },
+
+            renderList(items) {
+                const list = document.getElementById('repoList');
+                list.innerHTML = '';
+                
+                if(items.length === 0) {
+                    list.innerHTML = '<p class="text-appMuted w-full text-center py-10">Folder is empty</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const isDir = item.type === 'dir';
+                    const icon = isDir 
+                        ? `<svg class="w-8 h-8 text-amber-400 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`
+                        : `<svg class="w-8 h-8 text-appPrimary drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+                    
+                    const cleanName = item.name.replace('.md', '');
+                    
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-4 rounded-2xl flex items-center gap-4 active:scale-95 transition hover:bg-slate-800/60 cursor-pointer';
+                    div.innerHTML = `${icon} <div class="flex-1 truncate"><h3 class="font-semibold text-appText tracking-wide truncate">${cleanName}</h3><p class="text-[11px] text-appMuted mt-0.5 uppercase tracking-wider font-medium">${isDir ? 'Folder' : 'Document'}</p></div>`;
+                    
+                    div.onclick = () => isDir ? this.loadPath(item.path, cleanName) : this.openDoc(item);
+                    list.appendChild(div);
+                });
+            },
+
+            async openDoc(file) {
+                this.currentFile = file;
+                this.showLoading(true, 'Reading...');
+                this.switchTab('reader', false);
+                
+                document.getElementById('headerTitle').innerText = file.name.replace('.md', '');
+                document.getElementById('backBtn').classList.remove('hidden');
+                document.getElementById('bookmarkToggleBtn').classList.remove('hidden');
+                this.checkBookmarkState();
+
+                try {
+                    const res = await fetch(file.download_url || `https://raw.githubusercontent.com/${USERNAME}/${REPO}/main/${file.path}`);
+                    const text = await res.text();
+                    
+                    const rawHtml = marked.parse(text);
+                    const cleanHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
+                    
+                    document.getElementById('markdownContainer').innerHTML = cleanHtml;
+                    document.querySelector('main').scrollTop = 0;
+                } catch(e) {
+                    document.getElementById('markdownContainer').innerHTML = '<p class="text-red-400">Error loading document.</p>';
+                }
+                this.showLoading(false);
+            },
+
+            goBack() {
+                if(document.getElementById('view-reader').classList.contains('active')) {
+                    this.currentFile = null;
+                    this.switchTab('home');
+                    this.updateHeader();
+                    return;
+                }
+                
+                if(this.pathStack.length > 1) {
+                    this.pathStack.pop();
+                    const prev = this.pathStack.pop(); 
+                    this.loadPath(prev.path, prev.name);
+                }
+            },
+
+            updateHeader() {
+                const current = this.pathStack[this.pathStack.length-1];
+                document.getElementById('headerTitle').innerText = current.name || 'Home';
+                const backBtn = document.getElementById('backBtn');
+                this.pathStack.length > 1 ? backBtn.classList.remove('hidden') : backBtn.classList.add('hidden');
+                document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+            },
+
+            switchTab(tabId, updateNav = true) {
+                document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${tabId}`).classList.add('active');
+                
+                if(updateNav) {
+                    document.querySelectorAll('.nav-btn').forEach(btn => {
+                        btn.classList.remove('text-appPrimary');
+                        btn.classList.add('text-appMuted');
+                    });
+                    
+                    let navIndex = tabId === 'home' ? 0 : tabId === 'search' ? 1 : tabId === 'bookmarks' ? 2 : -1;
+                    if(navIndex >= 0) {
+                        const btns = document.querySelectorAll('.nav-btn');
+                        btns[navIndex].classList.remove('text-appMuted');
+                        btns[navIndex].classList.add('text-appPrimary');
+                    }
+                }
+
+                if(tabId === 'home') this.updateHeader();
+                if(tabId === 'search') {
+                    document.getElementById('headerTitle').innerText = 'Search';
+                    document.getElementById('backBtn').classList.add('hidden');
+                    document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+                }
+                if(tabId === 'bookmarks') {
+                    document.getElementById('headerTitle').innerText = 'Bookmarks';
+                    document.getElementById('backBtn').classList.add('hidden');
+                    document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+                    this.renderBookmarks();
+                }
+            },
+
+            handleSearch() {
+                const query = document.getElementById('searchInput').value.toLowerCase();
+                const resDiv = document.getElementById('searchResults');
+                resDiv.innerHTML = '';
+                
+                if(!query) return;
+
+                const results = this.allFiles.filter(f => f.path.toLowerCase().includes(query));
+                
+                results.forEach(item => {
+                    const cleanName = item.path.split('/').pop().replace('.md', '');
+                    const isDir = item.type === 'tree';
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-slate-800/60 cursor-pointer';
+                    div.innerHTML = `
+                        <div class="bg-slate-800/80 border border-slate-700/50 p-2.5 rounded-xl shadow-inner">
+                            <svg class="w-5 h-5 ${isDir ? 'text-amber-400' : 'text-appPrimary'}" fill="currentColor" viewBox="0 0 20 20">
+                                ${isDir ? '<path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>' : '<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>'}
+                            </svg>
+                        </div>
+                        <div class="flex-1 truncate"><p class="text-sm font-semibold truncate tracking-wide">${cleanName}</p><p class="text-[10px] text-appMuted mt-0.5 truncate opacity-70">${item.path}</p></div>
+                    `;
+                    div.onclick = () => {
+                        if(isDir) {
+                            this.pathStack = [{path: '', name: 'Home'}];
+                            this.loadPath(item.path, cleanName);
+                            this.switchTab('home');
+                        } else {
+                            this.openDoc(item);
+                        }
+                    };
+                    resDiv.appendChild(div);
+                });
+            },
+
+            toggleBookmark() {
+                if(!this.currentFile) return;
+                const idx = this.bookmarks.findIndex(b => b.path === this.currentFile.path);
+                if(idx > -1) {
+                    this.bookmarks.splice(idx, 1);
+                } else {
+                    this.bookmarks.push({ name: this.currentFile.name, path: this.currentFile.path });
+                }
+                localStorage.setItem('study_bookmarks', JSON.stringify(this.bookmarks));
+                this.checkBookmarkState();
+            },
+
+            checkBookmarkState() {
+                if(!this.currentFile) return;
+                const btn = document.getElementById('bookmarkToggleBtn');
+                const isBookmarked = this.bookmarks.some(b => b.path === this.currentFile.path);
+                
+                if(isBookmarked) {
+                    btn.classList.add('text-yellow-400');
+                    btn.classList.remove('text-appMuted');
+                    btn.innerHTML = `<svg class="w-6 h-6 fill-current" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
+                } else {
+                    btn.classList.remove('text-yellow-400');
+                    btn.classList.add('text-appMuted');
+                    btn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
+                }
+            },
+
+            renderBookmarks() {
+                const list = document.getElementById('bookmarksList');
+                list.innerHTML = '';
+                if(this.bookmarks.length === 0) {
+                    list.innerHTML = '<p class="text-appMuted text-center mt-10">No bookmarks yet.</p>';
+                    return;
+                }
+                
+                this.bookmarks.forEach(bm => {
+                    const cleanName = bm.name.replace('.md', '');
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-4 rounded-xl flex items-center justify-between hover:bg-slate-800/60 transition';
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3 truncate cursor-pointer flex-1" onclick="app.openDoc({path: '${bm.path}', name: '${bm.name}'})">
+                            <div class="bg-amber-400/10 p-2 rounded-lg border border-amber-400/20">
+                                <svg class="w-5 h-5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                            </div>
+                            <span class="truncate font-semibold tracking-wide">${cleanName}</span>
+                        </div>
+                        <button class="p-2 text-appMuted hover:text-red-400 transition active:scale-90" onclick="app.removeBookmark('${bm.path}')">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    `;
+                    list.appendChild(div);
+                });
+            },
+
+            removeBookmark(path) {
+                this.bookmarks = this.bookmarks.filter(b => b.path !== path);
+                localStorage.setItem('study_bookmarks', JSON.stringify(this.bookmarks));
+                this.renderBookmarks();
+            }
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('SW registration failed:', err);
+                });
+            });
+        }
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
