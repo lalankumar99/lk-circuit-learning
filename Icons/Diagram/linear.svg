@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1000"
+     height="700"
+     viewBox="0 0 1000 700"
+     fill="none">
+
+  <g
+    stroke="#1E293B"
+    stroke-width="7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+
+    <path d="M150 580 L150 100"/>
+    <path d="M150 100 L128 132"/>
+    <path d="M150 100 L172 132"/>
+
+    <path d="M150 580 L900 580"/>
+    <path d="M900 580 L868 558"/>
+    <path d="M900 580 L868 602"/>
+
+    <path
+      d="M150 580 L820 150"
+      stroke="#2563EB"
+      stroke-width="10"
+    />
+
+  </g>
+
+  <g
+    fill="#1E293B"
+    font-family="Comic Sans MS, cursive"
+    font-size="42"
+    font-weight="700"
+  >
+    <text x="105" y="95">I</text>
+    <text x="915" y="595">V</text>
+  </g>
+
+</svg>
