@@ -1,0 +1,16 @@
+{
+  "name": "LK Circuit Learning",
+  "short_name": "Circuit Learning",
+  "start_url": "/lk-circuit-learning/",
+  "scope": "/lk-circuit-learning/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/lk-circuit-learning/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
