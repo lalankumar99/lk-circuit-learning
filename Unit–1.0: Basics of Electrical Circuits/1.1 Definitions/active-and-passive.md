@@ -1,0 +1,83 @@
+# Active and Passive Components
+
+## 1. Active Component
+
+An **active component** is an electrical or electronic component that requires an external source of energy and can control or influence the output signal.
+
+In an active component, the **input signal controls the output** with the help of an external power supply.
+
+### Basic Concept
+
+**Input Signal → Active Device → Output Signal**
+
+**External Power Supply → Active Device**
+
+![Active Component](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/active.png)
+
+[Open Active Component Diagram](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/active.png)
+
+### Key Points
+
+- Requires an external power source for its operation.
+- The input signal can control the output.
+- Can provide power gain or amplification in suitable configurations.
+- Used for amplification, switching, and signal processing.
+
+### Examples
+
+- Transistor
+- FET
+- Integrated Circuit (IC)
+- Operational Amplifier (Op-Amp)
+
+---
+
+## 2. Passive Component
+
+A **passive component** is an electrical component that does not provide power gain or amplification. It can dissipate, store, or transfer electrical energy.
+
+A passive component does not provide power gain.
+
+### Basic Concept
+
+**Input Signal → Passive Component → Output Signal**
+
+The component may **dissipate, store, or transfer energy** without providing power gain.
+
+![Passive Component](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/passive.png)
+
+[Open Passive Component Diagram](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/passive.png)
+
+### Key Points
+
+- Does not provide power gain.
+- Cannot amplify a signal.
+- Can dissipate electrical energy.
+- Can store electrical energy.
+- Can transfer energy without providing power gain.
+- Used for resistance, energy storage, filtering, coupling, and other circuit functions.
+
+### Examples
+
+- Resistor
+- Capacitor
+- Inductor
+- Transformer
+
+---
+
+## Difference Between Active and Passive Components
+
+| Active Component | Passive Component |
+|---|---|
+| Requires an external energy source for active operation. | Does not provide power gain. |
+| Can control or amplify signals. | Cannot provide power amplification. |
+| Can provide power gain in suitable circuits. | Has no power gain. |
+| Used for amplification and switching. | Used for storing, dissipating, or transferring energy. |
+| Examples: Transistor, FET, IC, Op-Amp | Examples: Resistor, Capacitor, Inductor, Transformer |
+
+## Quick Revision
+
+**Active Component → External Power + Signal Control + Possible Power Gain**
+
+**Passive Component → No Power Gain + Dissipation/Storage/Transfer of Energy**
