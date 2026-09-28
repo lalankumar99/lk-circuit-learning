@@ -4,27 +4,23 @@
 
 A **linear component** is an electrical component in which the relationship between voltage and current is linear.
 
-For a constant resistance, Ohm's Law is:
+For a constant resistance:
 
-$V = IR$
+**V = I × R**
 
 Where:
 
-- $V$ = Voltage
-- $I$ = Current
-- $R$ = Resistance
+- **V** = Voltage
+- **I** = Current
+- **R** = Resistance
 
 ### V-I Characteristic
 
-![Linear V-I Characteristic](../../Icons/Diagram/linear.svg)
+[![Linear V-I Characteristic](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/linear.svg)](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/linear.svg)
 
 The V-I characteristic of a linear component is a **straight line**.
 
-For a constant resistor, if the voltage increases proportionally, the current also increases proportionally.
-
-### Example
-
-A **resistor with constant resistance** is a common example of a linear component.
+A constant resistor is a common example of a linear component.
 
 ---
 
@@ -36,9 +32,9 @@ The voltage and current do not maintain a constant proportional relationship.
 
 ### V-I Characteristic
 
-![Non-Linear V-I Characteristic](../../Icons/Diagram/nonlinear.svg)
+[![Non-Linear V-I Characteristic](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/nonlinear.svg)](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/nonlinear.svg)
 
-The V-I characteristic of a non-linear component is generally a **curved line** rather than a straight line.
+The V-I characteristic of a non-linear component is generally a **curved line**.
 
 ### Examples
 
@@ -54,8 +50,8 @@ The V-I characteristic of a non-linear component is generally a **curved line** 
 |---|---|
 | Voltage-current relationship is linear. | Voltage-current relationship is non-linear. |
 | V-I characteristic is a straight line. | V-I characteristic is generally a curved line. |
-| Resistance remains constant under the specified operating conditions. | Resistance changes with the operating point. |
-| Example: Constant resistor | Examples: Diode, transistor, filament lamp |
+| Resistance remains constant under specified conditions. | Resistance changes with the operating point. |
+| Example: Constant resistor | Examples: Diode, Transistor, Filament Lamp |
 
 ## Key Point
 
