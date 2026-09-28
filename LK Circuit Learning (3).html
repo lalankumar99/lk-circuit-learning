@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#020617">
+    <title>LK Circuit Learning</title>
+    
+    <!-- PWA Links (Keep files in root folder) -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- KaTeX for Mathematical Equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        appBg: '#020617',
+                        appSurface: '#0f172a',
+                        appPrimary: '#0ea5e9', 
+                        appText: '#f8fafc',
+                        appMuted: '#64748b'
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .view-screen {
+            display: none;
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .view-screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 3D Electric Ring Loader */
+        .loader-3d-container {
+            perspective: 800px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #0ea5e9;
+            border-bottom-color: #38bdf8;
+            animation: spin3D 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.6), inset 0 0 20px rgba(56, 189, 248, 0.4);
+            position: relative;
+        }
+        .loader-ring::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-left-color: #fde047;
+            border-right-color: #facc15;
+            animation: spin3DReverse 1s linear infinite;
+        }
+        @keyframes spin3D { 
+            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); } 
+            100% { transform: rotateX(360deg) rotateY(180deg) rotateZ(360deg); } 
+        }
+        @keyframes spin3DReverse { 
+            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(360deg); } 
+            100% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); } 
+        }
+
+        /* 3D Folder & Card Interaction */
+        .app-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .app-card:active {
+            transform: scale(0.94) translateY(4px) rotateX(5deg);
+            box-shadow: 0 1px 5px -1px rgba(0, 0, 0, 0.5), inset 0 4px 10px rgba(0,0,0,0.5);
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 1));
+        }
+
+        /* Glassmorphism */
+        .glass-nav {
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .glass-bottom {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .glass-bottom.hide-nav {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Markdown Styles & PDF fixes */
+        .md-content { line-height: 1.7; font-size: 1.05rem; color: #e2e8f0; }
+        .md-content h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 1.2rem; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .md-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 0.5rem; }
+        .md-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; color: #bae6fd; }
+        .md-content p { margin-bottom: 1.2rem; }
+        .md-content ul { list-style-type: none; padding-left: 0; margin-bottom: 1.2rem; }
+        .md-content ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .md-content ul li::before { content: "•"; color: #38bdf8; font-weight: bold; position: absolute; left: 0; }
+        .md-content pre { background: #0f172a; padding: 1.25rem; border-radius: 12px; overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .md-content code { background: rgba(30, 41, 59, 0.8); padding: 0.2rem 0.4rem; border-radius: 6px; font-family: monospace; color: #fde047; font-size: 0.9em; }
+        .md-content pre code { background: none; color: #e2e8f0; padding: 0; }
+        .md-content img, .md-content svg { max-width: 100%; border-radius: 8px; margin: 1rem 0; background: rgba(255,255,255,0.02); }
+        .md-content a { color: #38bdf8; text-decoration: none; border-bottom: 1px dashed #38bdf8; }
+        .md-content table { width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 1.5rem; }
+        .md-content th, .md-content td { padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Math overflow fix */
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding-bottom: 0.5rem; }
+        
+        /* PDF specific tweaks to prevent page cuts and keep Dark Theme */
+        .md-content pre, .md-content img, .md-content svg, .md-content table, .md-content blockquote, .md-content p, .katex-display {
+            page-break-inside: avoid;
+        }
+        
+        /* Hide UI completely in Native Fullscreen API */
+        :fullscreen #headerActions { display: flex; }
+        :fullscreen .glass-nav { border-bottom: none; }
+        :fullscreen .glass-bottom { display: none !important; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col font-sans">
+
+    <!-- Header / Top Nav -->
+    <header id="mainHeader" class="glass-nav px-4 py-3 flex items-center justify-between z-20 shrink-0 sticky top-0 transition-all">
+        <div class="flex items-center gap-3 overflow-hidden">
+            <button id="backBtn" class="hidden text-appPrimary p-2 -ml-2 rounded-full hover:bg-slate-800/80 transition active:scale-90" onclick="app.goBack()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h1 id="headerTitle" class="text-xl font-bold truncate tracking-wide text-white">LK Circuit Learning</h1>
+        </div>
+        <div id="headerActions" class="flex items-center gap-1 shrink-0">
+            <!-- Download PDF Button -->
+            <button id="downloadBtn" class="hidden text-appMuted p-2 rounded-full hover:bg-slate-800/80 hover:text-appPrimary transition active:scale-90" onclick="app.downloadPDF()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            </button>
+            <!-- Fullscreen Square Bracket Button -->
+            <button id="fullscreenBtn" class="hidden text-appMuted p-2 rounded-full hover:bg-slate-800/80 hover:text-appPrimary transition active:scale-90" onclick="app.toggleFullscreen()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <!-- Bookmark Button -->
+            <button id="bookmarkToggleBtn" class="hidden text-appMuted p-2 rounded-full hover:bg-slate-800/80 transition active:scale-90" onclick="app.toggleBookmark()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto relative bg-appBg">
+        
+        <!-- 3D Loading Overlay -->
+        <div id="loadingOverlay" class="absolute inset-0 z-50 bg-appBg/95 backdrop-blur-md flex flex-col items-center justify-center">
+            <div class="loader-3d-container mb-6">
+                <div class="loader-ring"></div>
+            </div>
+            <p class="text-appPrimary text-sm font-bold tracking-widest uppercase animate-pulse" id="loadingText">Syncing Data...</p>
+        </div>
+
+        <!-- Home View (Folder List) -->
+        <div id="view-home" class="view-screen active flex-col p-4 w-full h-full pb-24">
+            <div id="repoList" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"></div>
+        </div>
+
+        <!-- Reader View (Markdown Content) -->
+        <!-- pb-6 instead of pb-28 because bottom nav is hidden here -->
+        <div id="view-reader" class="view-screen flex-col w-full min-h-full bg-appBg">
+            <div id="markdownContainer" class="md-content px-5 pt-6 pb-6 max-w-3xl mx-auto w-full"></div>
+        </div>
+
+        <!-- Bookmarks View -->
+        <div id="view-bookmarks" class="view-screen flex-col p-4 w-full h-full pb-24">
+            <h2 class="text-xl font-bold mb-5 text-appPrimary pl-1">Saved Topics</h2>
+            <div id="bookmarksList" class="flex flex-col gap-3"></div>
+        </div>
+
+        <!-- Search View -->
+        <div id="view-search" class="view-screen flex-col p-4 w-full h-full pb-24">
+            <div class="relative mb-6">
+                <input type="text" id="searchInput" placeholder="Search topics..." class="w-full bg-slate-800/80 border border-slate-700/50 rounded-2xl py-3.5 pl-12 pr-4 text-appText focus:ring-2 focus:ring-appPrimary outline-none transition shadow-inner" oninput="app.handleSearch()">
+                <svg class="w-5 h-5 text-appMuted absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <div id="searchResults" class="flex flex-col gap-3"></div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Hidden when reading doc) -->
+    <nav id="bottomNav" class="glass-bottom fixed bottom-0 w-full z-30 shrink-0 pb-safe">
+        <div class="flex justify-around items-center h-16 px-2 max-w-md mx-auto">
+            <button class="nav-btn flex flex-col items-center gap-1 p-2 w-20 text-appPrimary transition active:scale-90" onclick="app.switchTab('home')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="text-[10px] font-semibold tracking-wide">Home</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 p-2 w-20 text-appMuted hover:text-appPrimary transition active:scale-90" onclick="app.switchTab('search')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <span class="text-[10px] font-semibold tracking-wide">Search</span>
+            </button>
+            <button class="nav-btn flex flex-col items-center gap-1 p-2 w-20 text-appMuted hover:text-appPrimary transition active:scale-90" onclick="app.switchTab('bookmarks')">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span class="text-[10px] font-semibold tracking-wide">Saved</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Set GitHub Details
+        const USERNAME = 'lalankumar99'; 
+        const REPO = 'lk-circuit-learning';           
+        
+        const app = {
+            api: 'https://api.github.com/repos',
+            pathStack: [{ path: '', name: 'Home' }],
+            allFiles: [],
+            bookmarks: JSON.parse(localStorage.getItem('study_bookmarks') || '[]'),
+            currentFile: null,
+
+            async init() {
+                marked.setOptions({ breaks: true, gfm: true });
+                await this.fetchRepoTree();
+                this.loadPath('');
+                
+                // Track fullscreen changes to reset icon/orientation if needed
+                document.addEventListener('fullscreenchange', () => {
+                    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+                        screen.orientation.unlock(); 
+                    }
+                });
+            },
+
+            showLoading(show, text = 'Loading...') {
+                const el = document.getElementById('loadingOverlay');
+                document.getElementById('loadingText').innerText = text;
+                el.style.display = show ? 'flex' : 'none';
+            },
+
+            async fetchRepoTree() {
+                try {
+                    const infoRes = await fetch(`${this.api}/${USERNAME}/${REPO}`);
+                    if(!infoRes.ok) throw new Error("Repo not found");
+                    const info = await infoRes.json();
+                    
+                    const treeRes = await fetch(`${this.api}/${USERNAME}/${REPO}/git/trees/${info.default_branch}?recursive=1`);
+                    const treeData = await treeRes.json();
+                    
+                    this.allFiles = treeData.tree.filter(i => {
+                        if(i.path.startsWith('.')) return false;
+                        if(i.path.startsWith('public/icons')) return false; 
+                        return i.type === 'tree' || i.path.endsWith('.md');
+                    });
+                } catch(e) {
+                    console.error(e);
+                    document.getElementById('loadingText').innerText = "Network Error!";
+                }
+            },
+
+            async loadPath(path, name = 'Home') {
+                this.showLoading(true, 'Opening Folder...');
+                try {
+                    let items = this.allFiles.filter(i => {
+                        const parentPath = path ? path + '/' : '';
+                        return i.path.startsWith(parentPath) && 
+                               i.path.substring(parentPath.length).indexOf('/') === -1;
+                    });
+
+                    items.sort((a,b) => a.type === b.type ? a.path.localeCompare(b.path) : (a.type === 'tree' ? -1 : 1));
+                    
+                    this.renderList(items, path);
+                    
+                    if(path !== this.pathStack[this.pathStack.length-1]?.path) {
+                        this.pathStack.push({path, name});
+                    }
+                    this.updateHeader();
+                } catch(e) {
+                    console.error(e);
+                }
+                this.showLoading(false);
+            },
+
+            renderList(items, currentPath) {
+                const list = document.getElementById('repoList');
+                list.innerHTML = '';
+                
+                if(items.length === 0) {
+                    list.innerHTML = '<p class="text-appMuted w-full col-span-full text-center py-10">Empty Folder</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const isDir = item.type === 'tree';
+                    const icon = isDir 
+                        ? `<div class="bg-amber-400/20 p-3 rounded-xl border border-amber-400/30 shadow-inner"><svg class="w-6 h-6 text-amber-400 drop-shadow-md" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg></div>`
+                        : `<div class="bg-sky-400/10 p-3 rounded-xl border border-sky-400/20 shadow-inner"><svg class="w-6 h-6 text-appPrimary drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>`;
+                    
+                    const cleanName = item.path.split('/').pop().replace('.md', '');
+                    
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-3.5 rounded-2xl flex items-center gap-4 cursor-pointer';
+                    div.innerHTML = `${icon} <div class="flex-1 truncate"><h3 class="font-bold text-slate-200 tracking-wide truncate text-[15px]">${cleanName}</h3><p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">${isDir ? 'Folder' : 'Document'}</p></div>`;
+                    
+                    div.onclick = () => isDir ? this.loadPath(item.path, cleanName) : this.openDoc(item);
+                    list.appendChild(div);
+                });
+            },
+
+            async openDoc(file) {
+                this.currentFile = file;
+                const cleanName = file.path.split('/').pop().replace('.md', '');
+                this.showLoading(true, 'Reading Notes...');
+                this.switchTab('reader', false);
+                
+                document.getElementById('headerTitle').innerText = cleanName;
+                document.getElementById('backBtn').classList.remove('hidden');
+                document.getElementById('bookmarkToggleBtn').classList.remove('hidden');
+                document.getElementById('fullscreenBtn').classList.remove('hidden');
+                document.getElementById('downloadBtn').classList.remove('hidden');
+                
+                // Hide bottom nav for distraction-free reading
+                document.getElementById('bottomNav').classList.add('hide-nav');
+                
+                this.checkBookmarkState();
+
+                try {
+                    const res = await fetch(`https://raw.githubusercontent.com/${USERNAME}/${REPO}/main/${file.path}`);
+                    if(!res.ok) throw new Error("Fetch failed");
+                    let text = await res.text();
+                    
+                    const rawHtml = marked.parse(text);
+                    
+                    // Purify config: allow SVG, MathML and common styling for images
+                    const cleanHtml = DOMPurify.sanitize(rawHtml, { 
+                        USE_PROFILES: { html: true, svg: true, mathMl: true },
+                        ADD_ATTR: ['target', 'class']
+                    });
+                    
+                    const container = document.getElementById('markdownContainer');
+                    container.innerHTML = cleanHtml;
+                    
+                    // Render Math Equations securely
+                    if (window.renderMathInElement) {
+                        renderMathInElement(container, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false},
+                                {left: '\\(', right: '\\)', display: false},
+                                {left: '\\[', right: '\\]', display: true}
+                            ],
+                            throwOnError: false
+                        });
+                    }
+
+                    document.querySelector('main').scrollTop = 0;
+                } catch(e) {
+                    console.error(e);
+                    document.getElementById('markdownContainer').innerHTML = '<div class="text-center mt-10"><p class="text-red-400 font-semibold mb-2">Failed to load content.</p><p class="text-slate-500 text-sm">Please check your internet connection or repository link.</p></div>';
+                }
+                this.showLoading(false);
+            },
+
+            async toggleFullscreen() {
+                const doc = document.documentElement;
+                try {
+                    if (!document.fullscreenElement) {
+                        await doc.requestFullscreen();
+                        if (screen.orientation && screen.orientation.lock) {
+                            await screen.orientation.lock('landscape').catch(e => console.log('Orientation lock ignored:', e));
+                        }
+                    } else {
+                        if (document.exitFullscreen) await document.exitFullscreen();
+                    }
+                } catch (err) {
+                    console.error("Fullscreen error:", err);
+                }
+            },
+
+            async downloadPDF() {
+                if(!this.currentFile) return;
+                this.showLoading(true, 'Generating PDF...');
+                
+                const element = document.getElementById('markdownContainer');
+                const cleanName = this.currentFile.path.split('/').pop().replace('.md', '');
+                
+                const opt = {
+                    margin:       [10, 10, 10, 10], // top, left, bottom, right
+                    filename:     `${cleanName}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#0f172a', /* Exact App Dark Theme applied to PDF */
+                        letterRendering: true,
+                        windowWidth: element.scrollWidth
+                    },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                try {
+                    await html2pdf().set(opt).from(element).save();
+                } catch(e) {
+                    console.error("PDF generation failed:", e);
+                    alert("PDF Generation Failed.");
+                }
+                
+                this.showLoading(false);
+            },
+
+            goBack() {
+                if(document.getElementById('view-reader').classList.contains('active')) {
+                    this.currentFile = null;
+                    // Show bottom nav back when exiting reader view
+                    document.getElementById('bottomNav').classList.remove('hide-nav');
+                    
+                    this.switchTab('home');
+                    this.updateHeader();
+                    return;
+                }
+                if(this.pathStack.length > 1) {
+                    this.pathStack.pop();
+                    const prev = this.pathStack[this.pathStack.length-1]; 
+                    this.loadPath(prev.path, prev.name);
+                }
+            },
+
+            updateHeader() {
+                const current = this.pathStack[this.pathStack.length-1];
+                document.getElementById('headerTitle').innerText = current.name || 'Home';
+                const backBtn = document.getElementById('backBtn');
+                
+                this.pathStack.length > 1 ? backBtn.classList.remove('hidden') : backBtn.classList.add('hidden');
+                document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+                document.getElementById('fullscreenBtn').classList.add('hidden');
+                document.getElementById('downloadBtn').classList.add('hidden');
+            },
+
+            switchTab(tabId, updateNav = true) {
+                document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${tabId}`).classList.add('active');
+                
+                if(updateNav) {
+                    // Ensure bottom nav is visible on main tabs
+                    document.getElementById('bottomNav').classList.remove('hide-nav');
+                    
+                    document.querySelectorAll('.nav-btn').forEach(btn => {
+                        btn.classList.remove('text-appPrimary');
+                        btn.classList.add('text-appMuted');
+                    });
+                    
+                    let navIndex = tabId === 'home' ? 0 : tabId === 'search' ? 1 : tabId === 'bookmarks' ? 2 : -1;
+                    if(navIndex >= 0) {
+                        const btns = document.querySelectorAll('.nav-btn');
+                        btns[navIndex].classList.remove('text-appMuted');
+                        btns[navIndex].classList.add('text-appPrimary');
+                    }
+                }
+
+                if(tabId === 'home') this.updateHeader();
+                if(tabId === 'search') {
+                    document.getElementById('headerTitle').innerText = 'Search';
+                    document.getElementById('backBtn').classList.add('hidden');
+                    document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+                    document.getElementById('fullscreenBtn').classList.add('hidden');
+                    document.getElementById('downloadBtn').classList.add('hidden');
+                }
+                if(tabId === 'bookmarks') {
+                    document.getElementById('headerTitle').innerText = 'Bookmarks';
+                    document.getElementById('backBtn').classList.add('hidden');
+                    document.getElementById('bookmarkToggleBtn').classList.add('hidden');
+                    document.getElementById('fullscreenBtn').classList.add('hidden');
+                    document.getElementById('downloadBtn').classList.add('hidden');
+                    this.renderBookmarks();
+                }
+            },
+
+            handleSearch() {
+                const query = document.getElementById('searchInput').value.toLowerCase();
+                const resDiv = document.getElementById('searchResults');
+                resDiv.innerHTML = '';
+                
+                if(!query) return;
+
+                const results = this.allFiles.filter(f => f.path.toLowerCase().includes(query) && f.type !== 'tree');
+                
+                results.forEach(item => {
+                    const cleanName = item.path.split('/').pop().replace('.md', '');
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-4 rounded-xl flex items-center gap-4 cursor-pointer';
+                    div.innerHTML = `
+                        <div class="bg-slate-800/80 p-2.5 rounded-xl">
+                            <svg class="w-5 h-5 text-appPrimary" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div class="flex-1 truncate"><p class="text-[15px] font-bold text-slate-200 truncate">${cleanName}</p><p class="text-[10px] text-appMuted mt-1 truncate">${item.path}</p></div>
+                    `;
+                    div.onclick = () => this.openDoc(item);
+                    resDiv.appendChild(div);
+                });
+            },
+
+            toggleBookmark() {
+                if(!this.currentFile) return;
+                const idx = this.bookmarks.findIndex(b => b.path === this.currentFile.path);
+                if(idx > -1) {
+                    this.bookmarks.splice(idx, 1);
+                } else {
+                    this.bookmarks.push({ path: this.currentFile.path });
+                }
+                localStorage.setItem('study_bookmarks', JSON.stringify(this.bookmarks));
+                this.checkBookmarkState();
+            },
+
+            checkBookmarkState() {
+                if(!this.currentFile) return;
+                const btn = document.getElementById('bookmarkToggleBtn');
+                const isBookmarked = this.bookmarks.some(b => b.path === this.currentFile.path);
+                
+                if(isBookmarked) {
+                    btn.classList.add('text-amber-400');
+                    btn.classList.remove('text-appMuted');
+                    btn.innerHTML = `<svg class="w-5 h-5 fill-current" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
+                } else {
+                    btn.classList.remove('text-amber-400');
+                    btn.classList.add('text-appMuted');
+                    btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
+                }
+            },
+
+            renderBookmarks() {
+                const list = document.getElementById('bookmarksList');
+                list.innerHTML = '';
+                if(this.bookmarks.length === 0) {
+                    list.innerHTML = '<div class="text-center mt-10"><svg class="w-12 h-12 text-slate-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg><p class="text-appMuted">No bookmarks yet.</p></div>';
+                    return;
+                }
+                
+                this.bookmarks.forEach(bm => {
+                    const cleanName = bm.path.split('/').pop().replace('.md', '');
+                    const div = document.createElement('div');
+                    div.className = 'app-card p-4 rounded-xl flex items-center justify-between';
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3 truncate cursor-pointer flex-1" onclick="app.openDoc({path: '${bm.path}'})">
+                            <div class="bg-amber-400/10 p-2.5 rounded-lg border border-amber-400/20">
+                                <svg class="w-5 h-5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                            </div>
+                            <span class="truncate font-bold text-slate-200">${cleanName}</span>
+                        </div>
+                        <button class="p-2 text-appMuted hover:text-red-400 transition active:scale-90" onclick="app.removeBookmark('${bm.path}')">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    `;
+                    list.appendChild(div);
+                });
+            },
+
+            removeBookmark(path) {
+                this.bookmarks = this.bookmarks.filter(b => b.path !== path);
+                localStorage.setItem('study_bookmarks', JSON.stringify(this.bookmarks));
+                this.renderBookmarks();
+            }
+        };
+
+        // Initialize App
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
