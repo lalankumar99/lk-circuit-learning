@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Advanced Electrical Circuit System Initialization">
+    <meta name="theme-color" content="#020617">
+    <meta name="google-site-verification" content="qmiuroKf1Xy9ijrr8yPOX2bOWNf5dq0rotrcxMCgvFg" />
+    <title>System Initialization | Electrical Secure Access</title>
+    
+    <!-- Premium Fonts for Sci-Fi HUD Interface -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries: GSAP for Animation Architecture & Three.js for 3D Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           1. CORE ARCHITECTURE & CSS RESET
+           ========================================================================== */
+        :root {
+            --color-primary: #00e5ff; /* Electric Blue */
+            --color-primary-glow: rgba(0, 229, 255, 0.8);
+            --color-secondary: #ff5e00; /* High Voltage Orange */
+            --color-secondary-glow: rgba(255, 94, 0, 0.8);
+            --color-success: #39ff14; /* Neon Green */
+            --color-bg-deep: #010205; /* Deep Void */
+            --font-hud: 'Share Tech Mono', monospace;
+            --font-title: 'Orbitron', sans-serif;
+            --font-sub: 'Rajdhani', sans-serif;
+            --hud-z-index: 100;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-bg-deep);
+            background-image: 
+                linear-gradient(rgba(1, 2, 5, 0.75), rgba(1, 2, 5, 0.85)), /* Dark overlay for HUD visibility */
+                url('https://lalanview.vercel.app/file_0000000000d081fdae4e13094de12e36.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+            font-family: var(--font-sub);
+            color: #ffffff;
+            /* Mobile-first constraints */
+            touch-action: none; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ==========================================================================
+           2. 3D WEBGL ENVIRONMENT
+           ========================================================================== */
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            opacity: 0; /* GSAP will control this */
+        }
+
+        /* ==========================================================================
+           3. HUD (HEADS-UP DISPLAY) OVERLAYS - MOBILE FIRST
+           ========================================================================== */
+        #hud-interface {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: var(--hud-z-index);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Advanced Screen Vignette */
+        .screen-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 10%, rgba(1, 2, 5, 0.98) 100%);
+            z-index: 2;
+        }
+
+        /* High-Tech Scanlines Overlay */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(255, 94, 0, 0.05), rgba(0, 229, 255, 0.03));
+            background-size: 100% 4px, 4px 100%;
+            z-index: 3;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Corners Targeting System */
+        .hud-corner {
+            position: absolute;
+            width: 15vmin;
+            height: 15vmin;
+            max-width: 100px;
+            max-height: 100px;
+            border: 2px solid transparent;
+            z-index: 10;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        .hud-top-left { top: 5%; left: 5%; border-top-color: #00f3ff; border-left-color: #00f3ff; }
+        .hud-top-right { top: 5%; right: 5%; border-top-color: #00f3ff; border-right-color: #00f3ff; }
+        .hud-bottom-left { bottom: 5%; left: 5%; border-bottom-color: #00f3ff; border-left-color: #00f3ff; }
+        .hud-bottom-right { bottom: 5%; right: 5%; border-bottom-color: #00f3ff; border-right-color: #00f3ff; }
+
+        /* HUD Telemetry Data */
+        .telemetry-data {
+            position: absolute;
+            font-family: var(--font-hud);
+            font-size: 0.65rem;
+            color: var(--color-primary);
+            text-shadow: 0 0 5px var(--color-primary-glow);
+            letter-spacing: 1px;
+            z-index: 15;
+            line-height: 1.4;
+            opacity: 0;
+            text-transform: uppercase;
+        }
+
+        /* Electricity Flicker Effect for Text */
+        .electric-flicker {
+            animation: textFlicker 3s infinite alternate;
+        }
+        
+        .data-tl { top: calc(5% + 15px); left: calc(5% + 15px); }
+        .data-tr { top: calc(5% + 15px); right: calc(5% + 15px); text-align: right; }
+        .data-bl { bottom: calc(5% + 15px); left: calc(5% + 15px); }
+        .data-br { bottom: calc(5% + 15px); right: calc(5% + 15px); text-align: right; }
+
+        @media (min-width: 768px) {
+            .telemetry-data { font-size: 0.85rem; }
+            .hud-top-left { top: 40px; left: 40px; }
+            .hud-top-right { top: 40px; right: 40px; }
+            .hud-bottom-left { bottom: 40px; left: 40px; }
+            .hud-bottom-right { bottom: 40px; right: 40px; }
+            .data-tl { top: 55px; left: 55px; }
+            .data-tr { top: 55px; right: 55px; }
+            .data-bl { bottom: 55px; left: 55px; }
+            .data-br { bottom: 55px; right: 55px; }
+        }
+
+        /* ==========================================================================
+           4. BIOMETRIC CORE (THE MAIN VISUAL)
+           ========================================================================== */
+        #biometric-core {
+            position: relative;
+            width: 85vmin; /* Mobile scaling */
+            height: 85vmin;
+            max-width: 500px;
+            max-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            transform: scale(0.5); /* GSAP will animate */
+            opacity: 0;
+        }
+
+        /* Complex Inline SVG Rings (Heavy Design) */
+        .svg-ring-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ring-spin-cw { animation: spin 15s linear infinite; }
+        .ring-spin-ccw { animation: spinReverse 12s linear infinite; }
+        .ring-pulse { animation: pulseGlow 1.5s ease-in-out infinite alternate; }
+        .ring-erratic { animation: erraticSpin 4s cubic-bezier(0.25, 0.1, 0.25, 1) infinite; }
+
+        /* The Image Wrapper */
+        #profile-wrapper {
+            position: absolute;
+            width: 55%;
+            height: 55%;
+            border-radius: 50%;
+            overflow: hidden;
+            z-index: 30;
+            border: 3px solid var(--color-primary);
+            box-shadow: 0 0 30px var(--color-primary-glow), inset 0 0 20px var(--color-primary-glow), 0 0 50px rgba(255, 94, 0, 0.2);
+            opacity: 0; /* GSAP will reveal */
+            background-color: #000;
+        }
+
+        #engineer-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.2) brightness(1.1) hue-rotate(190deg) saturate(1.8) drop-shadow(0 0 10px var(--color-primary));
+            transform: scale(1.5); /* For zoom out effect */
+            transition: all 1s ease;
+        }
+
+        /* Glitch effect applied via JS */
+        .img-glitch-active {
+            animation: imageGlitch 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+        }
+
+        /* ==========================================================================
+           5. IDENTITY & AUTHORIZATION PANEL
+           ========================================================================== */
+        #identity-panel {
+            position: absolute;
+            bottom: 15%;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            z-index: 25;
+            opacity: 0;
+        }
+
+        #auth-status-text {
+            font-family: var(--font-hud);
+            color: #00f3ff;
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+        }
+
+        #main-name {
+            font-family: var(--font-title);
+            font-size: 8vw; /* Responsive font sizing */
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5vw;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px var(--color-primary-glow), 3px 3px 0px var(--color-secondary-glow);
+            margin: 5px 0;
+            line-height: 1;
+        }
+
+        #sub-title {
+            font-family: var(--font-sub);
+            font-size: 4vw;
+            font-weight: 700;
+            color: var(--color-secondary);
+            text-shadow: 0 0 10px var(--color-secondary-glow);
+            letter-spacing: 1.5vw;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        @media (min-width: 768px) {
+            #identity-panel { bottom: 10%; }
+            #auth-status-text { font-size: 1rem; letter-spacing: 6px; }
+            #main-name { font-size: 3.5rem; letter-spacing: 12px; }
+            #sub-title { font-size: 1.5rem; letter-spacing: 8px; }
+        }
+
+        /* ==========================================================================
+           6. SYSTEM PROGRESS BAR
+           ========================================================================== */
+        #progress-system {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-track {
+            width: 80%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 1px;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--color-primary);
+            box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary);
+        }
+
+        /* ==========================================================================
+           7. ADVANCED KEYFRAME ANIMATIONS
+           ========================================================================== */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spinReverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+        @keyframes erraticSpin { 
+            0% { transform: rotate(0deg); } 
+            20% { transform: rotate(45deg); } 
+            40% { transform: rotate(40deg); } 
+            80% { transform: rotate(180deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        @keyframes pulseGlow {
+            0% { filter: drop-shadow(0 0 8px var(--color-secondary)); opacity: 0.6; }
+            100% { filter: drop-shadow(0 0 25px var(--color-secondary)); opacity: 1; }
+        }
+
+        @keyframes textFlicker {
+            0%, 100% { opacity: 1; text-shadow: 0 0 5px var(--color-primary-glow); }
+            33% { opacity: 0.8; }
+            34% { opacity: 0.4; text-shadow: none; }
+            35% { opacity: 1; }
+            66% { opacity: 0.9; }
+            67% { opacity: 0.3; }
+            68% { opacity: 0.8; }
+        }
+
+        @keyframes imageGlitch {
+            0% { transform: translate(0) scale(1.05); filter: hue-rotate(0deg); }
+            20% { transform: translate(-4px, 4px) scale(1.05); filter: hue-rotate(90deg); }
+            40% { transform: translate(-4px, -4px) scale(1.05); filter: hue-rotate(180deg); }
+            60% { transform: translate(4px, 4px) scale(1.05); filter: hue-rotate(270deg); }
+            80% { transform: translate(4px, -4px) scale(1.05); filter: hue-rotate(360deg); }
+            100% { transform: translate(0) scale(1.05); filter: hue-rotate(0deg); }
+        }
+
+        @keyframes nameGlitch {
+            0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+            10% { clip-path: polygon(0 15%, 100% 15%, 100% 30%, 0 30%); transform: translate(-5px); }
+            20% { clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); transform: translate(5px); }
+            30% { clip-path: polygon(0 40%, 100% 40%, 100% 50%, 0 50%); transform: translate(-2px); }
+            40% { clip-path: polygon(0 80%, 100% 80%, 100% 90%, 0 90%); transform: translate(2px); }
+        }
+        .text-glitch { animation: nameGlitch 0.4s cubic-bezier(.25, .46, .45, .94) both 2; }
+        
+    /* =========================================================
+   VIEW PROJECT — FUTURISTIC HUD BUTTON
+   ========================================================= */
+
+#view-project-btn {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+
+    z-index: 99999;
+    pointer-events: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 11px 18px;
+
+    color: #00f3ff;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0,243,255,0.12),
+            rgba(2,6,23,0.75)
+        );
+
+    border: 1px solid rgba(0,243,255,0.75);
+    border-radius: 6px;
+
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+
+    text-decoration: none;
+
+    box-shadow:
+        0 0 8px rgba(0,243,255,0.35),
+        inset 0 0 12px rgba(0,243,255,0.08);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    overflow: hidden;
+
+    transition:
+        transform 0.25s ease,
+        color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+/* Small electrical icon */
+#view-project-btn::before {
+    content: "⚡";
+    font-size: 12px;
+    color: var(--color-secondary);
+
+    text-shadow:
+        0 0 6px var(--color-secondary);
+
+    transition: transform 0.25s ease;
+}
+
+/* Moving light effect */
+#view-project-btn::after {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -120%;
+
+    width: 80%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(0,243,255,0.35),
+            transparent
+        );
+
+    transform: skewX(-25deg);
+
+    transition: left 0.6s ease;
+}
+
+/* Hover */
+#view-project-btn:hover {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0,243,255,0.25),
+            rgba(2,6,23,0.85)
+        );
+
+    border-color: #00f3ff;
+
+    box-shadow:
+        0 0 12px rgba(0,243,255,0.7),
+        0 0 30px rgba(0,243,255,0.25),
+        inset 0 0 15px rgba(0,243,255,0.12);
+
+    transform: translateY(-2px);
+}
+
+#view-project-btn:hover::before {
+    transform: translateX(3px);
+}
+
+#view-project-btn:hover::after {
+    left: 130%;
+}
+
+/* Click */
+#view-project-btn:active {
+    transform: scale(0.94);
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #view-project-btn {
+        top: 15px;
+        right: 15px;
+
+        padding: 9px 13px;
+
+        font-size: 10px;
+        letter-spacing: 1.5px;
+
+        gap: 7px;
+    }
+}
+    </style>
+    <!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Theme Color -->
+<meta name="theme-color" content="#020617">
+
+<!-- Android -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iPhone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+</head>
+<body>
+    <!-- VIEW PROJECT BUTTON -->
+<a href="project.html" id="view-project-btn">
+    VIEW PROJECT
+</a>
+
+    <!-- LAYER 1: THREE.JS 3D ENGINE -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- LAYER 2: HUD INTERFACE OVERLAY -->
+    <div id="hud-interface">
+        <div class="screen-vignette"></div>
+        <div class="scanlines"></div>
+
+        <!-- Targeting Corners -->
+        <div class="hud-corner hud-top-left"></div>
+        <div class="hud-corner hud-top-right"></div>
+        <div class="hud-corner hud-bottom-left"></div>
+        <div class="hud-corner hud-bottom-right"></div>
+
+        <!-- Dynamic HUD Telemetry Data (Electrical Theme) -->
+        <div class="telemetry-data data-tl electric-flicker" id="tel-1">
+            GRID.SYNC // 0x<span id="hex-1">000000</span><br>
+            PHASE: 3-Φ ACTIVE
+        </div>
+        <div class="telemetry-data data-tr" id="tel-2">
+            AC VOLT: <span id="lat-val">000.0</span>V<br>
+            CURRENT: <span id="lng-val">00.0</span>A<br>
+            FREQ: <span id="alt-val">00.0</span>Hz
+        </div>
+        <div class="telemetry-data data-bl" id="tel-3">
+            PWR FACTOR: <span id="mem-val">0.00</span><br>
+            IMPEDANCE: STABLE
+        </div>
+        <div class="telemetry-data data-br" id="tel-4">
+            SUBSTATION: CONNECTING...<br>
+            STATUS: <span style="color:var(--color-secondary)">OFFLINE</span>
+        </div>
+
+        <!-- LAYER 3: BIOMETRIC SCANNER (CENTER) -->
+        <div id="biometric-core">
+            
+            <!-- Highly Detailed Inline SVGs for High-Tech Look -->
+            
+            <!-- Stator Winding (Outer) -->
+            <svg class="svg-ring-layer ring-spin-cw" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="250" cy="250" r="240" fill="none" stroke="rgba(0, 229, 255, 0.2)" stroke-width="6" stroke-dasharray="2 12" />
+                <circle cx="250" cy="250" r="240" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="60 300" stroke-linecap="round" />
+            </svg>
+
+            <!-- AC Sine Wave & Nodes (Middle) -->
+            <svg class="svg-ring-layer ring-erratic ring-pulse" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- Hexagonal inner boundary representing a magnetic field core -->
+                <polygon points="250,30 440,140 440,360 250,470 60,360 60,140" fill="none" stroke="var(--color-secondary)" stroke-width="1" opacity="0.4" />
+                <!-- Electric arcs / jagged path -->
+                <path d="M 50,250 L 100,200 L 150,280 L 200,220 L 250,250 L 300,200 L 350,280 L 400,220 L 450,250" fill="none" stroke="var(--color-secondary)" stroke-width="3" stroke-dasharray="10 15 50 15"/>
+                <!-- Magnetic poles -->
+                <circle cx="250" cy="40" r="6" fill="var(--color-secondary)" />
+                <circle cx="250" cy="460" r="6" fill="var(--color-secondary)" />
+                <circle cx="460" cy="250" r="6" fill="var(--color-primary)" />
+                <circle cx="40" cy="250" r="6" fill="var(--color-primary)" />
+            </svg>
+
+            <!-- Rotor/Armature Solid Track (Inner) -->
+            <svg class="svg-ring-layer ring-spin-ccw" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="animation-duration: 3s;">
+                <circle cx="250" cy="250" r="180" fill="none" stroke="rgba(0, 229, 255, 0.1)" stroke-width="15" />
+                <circle cx="250" cy="250" r="180" fill="none" stroke="var(--color-primary)" stroke-width="15" stroke-dasharray="80 150 20 150" stroke-linecap="butt" />
+            </svg>
+
+            <!-- Crosshairs & Circuit Nodes -->
+            <svg class="svg-ring-layer" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <line x1="250" y1="50" x2="250" y2="100" stroke="var(--color-primary)" stroke-width="2" opacity="0.8"/>
+                <line x1="250" y1="400" x2="250" y2="450" stroke="var(--color-primary)" stroke-width="2" opacity="0.8"/>
+                <line x1="50" y1="250" x2="100" y2="250" stroke="var(--color-primary)" stroke-width="2" opacity="0.8"/>
+                <line x1="400" y1="250" x2="450" y2="250" stroke="var(--color-primary)" stroke-width="2" opacity="0.8"/>
+                <rect x="245" y="95" width="10" height="10" fill="none" stroke="var(--color-secondary)" stroke-width="2"/>
+                <rect x="245" y="395" width="10" height="10" fill="none" stroke="var(--color-secondary)" stroke-width="2"/>
+            </svg>
+
+            <!-- Profile Image Container -->
+            <div id="profile-wrapper">
+                <!-- EXACT IMAGE NAME AS REQUESTED: icon.svg in root directory -->
+                <img src="icon.svg" id="engineer-image" alt="Electrical Engineer Profile"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMwZjE3MmEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0MHB4IiBmaWxsPSIjMDBmM2ZmIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TEs8L3RleHQ+PC9zdmc+'; console.warn('Image not found in directory. Using fallback.');">
+            </div>
+        </div>
+
+        <!-- LAYER 4: IDENTITY & PROGRESS DATA (Updated to Electrical Engineer) -->
+        <div id="identity-panel">
+            <div id="auth-status-text" class="electric-flicker">INITIATING GRID SCAN...</div>
+            <h1 id="main-name" style="opacity: 0;">LALAN KUMAR</h1>
+            <h2 id="sub-title" style="opacity: 0;"> YOUR ELECTRICAL PARTNER </h2>
+            
+            <div id="progress-system">
+                <div class="progress-track">
+                    <div class="progress-fill" id="redirect-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+        ==========================================================================
+        8. JAVASCRIPT ARCHITECTURE (OBJECT ORIENTED, EXTENSIVE & PROFESSIONAL)
+        ==========================================================================
+    -->
+    <script>
+        /**
+         * Global Configuration Object
+         */
+        const AppConfig = {
+            targetDestination: 'home.html', // Redirects to home.html after completion
+            timings: {
+                totalDuration: 11000, // 11 Seconds of cinematic glory
+                scanStart: 2000,
+                revealStart: 4500,
+                redirectStart: 8500
+            },
+            colors: {
+                cyan: 0x00e5ff, // Electric Blue
+                amber: 0xff5e00, // High-Voltage Orange/Amber
+                dark: 0x010205, // Deep void
+                white: 0xffffff
+            }
+        };
+
+        /**
+         * Class: WebGL 3D Environment Controller
+         * Handles Three.js rendering, camera, and massive particle systems.
+         */
+        class Environment3D {
+            constructor() {
+                this.canvas = document.getElementById('webgl-canvas');
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(AppConfig.colors.dark, 0.001);
+                
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+                this.camera.position.z = 1000;
+
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setClearColor(AppConfig.colors.dark, 0.4); // 40% Opacity to reveal background image
+
+                this.clock = new THREE.Clock();
+                this.particles = null;
+                this.grid = null;
+
+                // Parallax tracking variables
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.targetX = 0;
+                this.targetY = 0;
+
+                this.initObjects();
+                this.addEventListeners();
+            }
+
+            initObjects() {
+                // 1. Massive Holographic Grid (Floor & Ceiling) - Circuit Board look
+                const gridHelperFloor = new THREE.GridHelper(4000, 150, AppConfig.colors.cyan, 0x051a24);
+                gridHelperFloor.position.y = -400;
+                gridHelperFloor.material.transparent = true;
+                gridHelperFloor.material.opacity = 0.3;
+                this.scene.add(gridHelperFloor);
+
+                const gridHelperCeiling = new THREE.GridHelper(4000, 150, AppConfig.colors.amber, 0x1a0a05);
+                gridHelperCeiling.position.y = 400;
+                gridHelperCeiling.material.transparent = true;
+                gridHelperCeiling.material.opacity = 0.15;
+                this.scene.add(gridHelperCeiling);
+
+                // 2. Complex Particle System (High Voltage Sparks)
+                const particleCount = window.innerWidth > 768 ? 5000 : 2000; // Optimize for mobile
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                const colorCyan = new THREE.Color(AppConfig.colors.cyan);
+                const colorAmber = new THREE.Color(AppConfig.colors.amber);
+                const colorWhite = new THREE.Color(AppConfig.colors.white);
+
+                for (let i = 0; i < particleCount; i++) {
+                    // Cylindrical distribution for a "tunnel" of electricity
+                    const radius = 500 + (Math.random() * 900);
+                    const theta = Math.random() * 2 * Math.PI;
+                    const z = (Math.random() - 0.5) * 3000;
+                    
+                    positions[i * 3] = radius * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(theta);
+                    positions[i * 3 + 2] = z;
+
+                    // 70% Blue Sparks, 20% Amber Sparks, 10% White Sparks
+                    const rand = Math.random();
+                    let finalColor;
+                    if(rand > 0.3) {
+                        finalColor = colorCyan.clone().lerp(colorWhite, Math.random() * 0.3);
+                    } else if(rand > 0.1) {
+                        finalColor = colorAmber.clone().lerp(colorWhite, Math.random() * 0.5);
+                    } else {
+                        finalColor = colorWhite;
+                    }
+
+                    colors[i * 3] = finalColor.r;
+                    colors[i * 3 + 1] = finalColor.g;
+                    colors[i * 3 + 2] = finalColor.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: window.innerWidth > 768 ? 3 : 2,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending,
+                    sizeAttenuation: true
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.scene.add(this.particles);
+            }
+
+            addEventListeners() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // Mouse movement for Desktop Parallax
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = (e.clientX - window.innerWidth / 2) * 2;
+                    this.mouseY = (e.clientY - window.innerHeight / 2) * 2;
+                });
+                
+                // Touch movement for Mobile Parallax
+                document.addEventListener('touchmove', (e) => {
+                    if(e.touches.length > 0) {
+                        this.mouseX = (e.touches[0].clientX - window.innerWidth / 2) * 2;
+                        this.mouseY = (e.touches[0].clientY - window.innerHeight / 2) * 2;
+                    }
+                }, { passive: true });
+            }
+
+            // Public method to start rendering
+            renderLoop = () => {
+                requestAnimationFrame(this.renderLoop);
+                
+                const time = this.clock.getElapsedTime();
+
+                // Smooth Camera Parallax
+                this.targetX = this.mouseX * 0.001;
+                this.targetY = this.mouseY * 0.001;
+                
+                this.camera.position.x += (this.mouseX * 0.2 - this.camera.position.x) * 0.05;
+                this.camera.position.y += (-this.mouseY * 0.2 - this.camera.position.y) * 0.05;
+                
+                // Move camera forward continuously to simulate traveling through power lines
+                this.camera.position.z -= 5;
+                if(this.camera.position.z < -1000) this.camera.position.z = 1000;
+                
+                this.camera.lookAt(this.camera.position.x, this.camera.position.y, this.camera.position.z - 100);
+
+                // Animate Spark Particles erratic movement
+                if(this.particles) {
+                    this.particles.rotation.z = time * 0.1;
+                    
+                    const positions = this.particles.geometry.attributes.position.array;
+                    for (let i = 0; i < positions.length; i += 3) {
+                        // Erratic sparking motion
+                        positions[i] += (Math.random() - 0.5) * 4; // X jitter
+                        positions[i+1] += (Math.random() - 0.5) * 4; // Y jitter
+                    }
+                    this.particles.geometry.attributes.position.needsUpdate = true;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            // Effect method for warp jump
+            triggerWarpSpeed() {
+                gsap.to(this.camera.position, {
+                    z: this.camera.position.z - 3000, // Hyperspeed through the sparks
+                    duration: 1.5,
+                    ease: "power4.in"
+                });
+            }
+        }
+
+        /**
+         * Class: HUD Interface Controller
+         * Handles all 2D screen text, numbers, and data simulations.
+         */
+        class HUDController {
+            constructor() {
+                this.els = {
+                    hex: document.getElementById('hex-1'),
+                    lat: document.getElementById('lat-val'), // Will act as Volts
+                    lng: document.getElementById('lng-val'), // Will act as Amps
+                    alt: document.getElementById('alt-val'), // Will act as Ohms
+                    mem: document.getElementById('mem-val'), // Will act as Power Draw
+                    status: document.getElementById('auth-status-text'),
+                    targetStatus: document.getElementById('tel-4').querySelector('span')
+                };
+                
+                this.intervals = [];
+            }
+
+            generateHex() {
+                return Math.floor(Math.random() * 16777215).toString(16).toUpperCase().padStart(6, '0');
+            }
+
+            startTelemetry() {
+                // High-speed HUD updates to look highly technical and electrical
+                const dataLoop = setInterval(() => {
+                    this.els.hex.innerText = this.generateHex();
+                    
+                    // Simulate Electrical Grid loads shifting
+                    const baseVolts = 230.00; // Indian Standard Voltage
+                    const baseAmps = 45.00; // Substation Current
+                    this.els.lat.innerText = (baseVolts + (Math.random() * 4.0 - 2.0)).toFixed(1);
+                    this.els.lng.innerText = (baseAmps + (Math.random() * 2.0 - 1.0)).toFixed(2);
+                    
+                    // Frequency 50Hz (Indian Standard)
+                    this.els.alt.innerText = (50.0 + (Math.random() * 0.2 - 0.1)).toFixed(2);
+                    
+                    // Simulate Power Factor
+                    this.els.mem.innerText = (0.95 + (Math.random() * 0.04)).toFixed(2);
+                }, 60);
+                
+                this.intervals.push(dataLoop);
+            }
+
+            updateStatus(msg, color = 'var(--color-primary)') {
+                this.els.status.innerText = msg;
+                this.els.status.style.color = color;
+            }
+
+            stopTelemetry() {
+                this.intervals.forEach(clearInterval);
+            }
+        }
+
+        /**
+         * Class: Master Sequence Director
+         * Utilizes GSAP to choreograph the entire cinematic experience.
+         */
+        class SequenceDirector {
+            constructor(env3d, hud) {
+                this.env3d = env3d;
+                this.hud = hud;
+                this.timeline = gsap.timeline();
+            }
+
+            buildAndPlay() {
+                const tl = this.timeline;
+
+                // PHASE 1: SYSTEM POWER UP (0s - 2.5s)
+                tl.to("#webgl-canvas", { opacity: 1, duration: 2, ease: "power2.inOut" }, 0)
+                  .to(".telemetry-data", { opacity: 1, stagger: 0.1, duration: 0.5 }, 0.5)
+                  .to(".hud-corner", { opacity: 1, duration: 1 }, 1)
+                  .call(() => this.hud.startTelemetry(), null, 1)
+                  
+                  // Bring in the center core
+                  .to("#biometric-core", { opacity: 1, scale: 1, duration: 2, ease: "elastic.out(1, 0.7)" }, 1.5)
+                  .to("#identity-panel", { opacity: 1, duration: 1 }, 2);
+
+                // PHASE 2: CIRCUIT SCANNING (2.5s - 5.5s)
+                tl.call(() => this.hud.updateStatus("ANALYZING RESISTANCE & CONTINUITY..."), null, 3)
+                  .call(() => {
+                      // Apply intense high voltage glow during scan
+                      document.getElementById('biometric-core').style.filter = "drop-shadow(0 0 30px rgba(255, 94, 0, 0.8))";
+                  }, null, 3.5)
+                  .call(() => this.hud.updateStatus("SYNCHRONIZING MAGNETIC FIELDS..."), null, 4.5);
+
+                // PHASE 3: AUTHORIZATION & REVEAL (5.5s - 8.5s)
+                tl.call(() => {
+                      this.hud.updateStatus("GRID SYNCHRONIZED: POWER RESTORED", "var(--color-success)");
+                      this.hud.els.targetStatus.innerText = "ONLINE";
+                      this.hud.els.targetStatus.style.color = "var(--color-success)";
+                      
+                      // Glitch the image wrapper before revealing
+                      const wrapper = document.getElementById('profile-wrapper');
+                      wrapper.style.opacity = "1";
+                      wrapper.classList.add('img-glitch-active');
+                      document.getElementById('biometric-core').style.filter = "drop-shadow(0 0 20px rgba(0, 229, 255, 0.6))";
+                  }, null, 5.5)
+                  
+                  // Stop glitch and reveal clean image
+                  .call(() => {
+                      document.getElementById('profile-wrapper').classList.remove('img-glitch-active');
+                      
+                      // Remove aggressive color filters to show original image gracefully, keep a slight blue tint
+                      const img = document.getElementById('engineer-image');
+                      img.style.filter = "contrast(1.05) brightness(1.05) hue-rotate(0deg) saturate(1.1) drop-shadow(0 0 5px var(--color-primary))";
+                      img.style.transform = "scale(1)"; // Zoom out effect on image
+                  }, null, 6)
+                  
+                  // Glitch and reveal Text (Name & Title)
+                  .to("#main-name", { opacity: 1, duration: 0.1 }, 6.2)
+                  .call(() => document.getElementById('main-name').classList.add('text-glitch'), null, 6.2)
+                  .to("#sub-title", { opacity: 1, y: -10, duration: 1, ease: "power3.out" }, 6.8);
+
+                // PHASE 4: REDIRECTION PROTOCOL (8.5s - 11s)
+                tl.call(() => this.hud.updateStatus("INITIALIZING HOME CIRCUIT CONNECTION..."), null, 7.5)
+                  .to("#redirect-progress", { width: "100%", duration: 2.5, ease: "power1.inOut" }, 8)
+                  
+                  // The Warp Out
+                  .call(() => {
+                      this.hud.updateStatus("EXECUTING HANDOFF...", "var(--color-success)");
+                      this.env3d.triggerWarpSpeed(); // 3D Camera zooms forward
+                      gsap.to("#hud-interface", { opacity: 0, scale: 1.5, duration: 1, ease: "power3.in" });
+                  }, null, 10.5)
+                  
+                  // Final Redirect Action (Mandatory, no skip)
+                  .call(() => {
+                      this.hud.stopTelemetry();
+                      window.location.href = AppConfig.targetDestination;
+                  }, null, 11.5);
+            }
+        }
+
+        /**
+         * Bootstrapper - Initializes the entire architecture when DOM is ready
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            // Instantiate subsystems
+            const engine3D = new Environment3D();
+            const hudController = new HUDController();
+            const director = new SequenceDirector(engine3D, hudController);
+
+            // Start 3D Rendering Engine
+            engine3D.renderLoop();
+
+            // Start Cinematic Sequence (Auto-plays, no user interaction required/allowed)
+            director.buildAndPlay();
+        });
+
+    </script>
+    <script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker
+            .register("sw.js")
+            .then((registration) => {
+                console.log("Service Worker Registered");
+            })
+            .catch((error) => {
+                console.log("Service Worker Failed", error);
+            });
+    });
+}
+    </script>
+    <script src="install.js"></script>
+    <script src="update.js"></script>
+</body>
+</html>
