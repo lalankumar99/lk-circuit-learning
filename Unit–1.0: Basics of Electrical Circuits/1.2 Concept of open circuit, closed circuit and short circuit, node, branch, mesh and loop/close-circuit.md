@@ -1,0 +1,28 @@
+# Closed Circuit
+
+A **closed circuit** is an electrical circuit in which there is a complete conducting path from the source through the circuit and back to the source.
+
+Because the path is complete, **current can flow through the circuit**.
+
+### Basic Concept
+
+**Complete Path → Current Flows**
+
+![Closed Circuit](https://lalankumar99.github.io/lk-circuit-learning/Icons/Diagram/closed-circuit.png)
+
+### Example
+
+A circuit with a **closed switch** is an example of a closed circuit.
+
+When the switch is closed, the conducting path is complete and current can flow through the circuit.
+
+### Key Points
+
+- The conducting path is complete.
+- Current can flow through the circuit.
+- A closed switch completes the circuit path.
+- The resistance of an ideal closed conducting path is approximately zero.
+
+### Quick Revision
+
+**Closed Circuit → Complete Path → Current Flows → Very Low Resistance**
